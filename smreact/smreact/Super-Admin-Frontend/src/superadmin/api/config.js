@@ -22,7 +22,14 @@
    can update them; ES-module live bindings propagate to every importer.
    ════════════════════════════════════════════════════════════════════ */
 
-const env = (typeof process !== 'undefined' && process.env) ? process.env : {};
+/* CRA (webpack 5) sirf poore `process.env` expression ko ek object literal se
+   badalta hai — bare `process` browser bundle me maujood NAHI hota. Is liye
+   `typeof process !== 'undefined'` production build me FALSE nikalta tha aur
+   yeh poora object {} reh jata tha: NODE_ENV aur saare REACT_APP_* gayab.
+   Isi wajah se prod build dev ka base (alphaapi) utha leta tha aur live par
+   har support call CORS par mar jati thi. `process.env` seedha likhna hi
+   theek hai — webpack use compile time par inline kar deta hai. */
+const env = process.env || {};
 
 const stripTrailingSlash = (u) => (typeof u === 'string' ? u.replace(/\/+$/, '') : u || '');
 

@@ -17,20 +17,31 @@
         else.
      3. The defaults below + the console's own session token.
 
-   Base URL, dev vs prod:
-     dev  (npm start on :3001) → the API host directly: https://alphaapi.schoolmentor.ai
-       (uska swagger /swagger/index.html par hai). Support ka CORS caller ka
-       Origin echo karta hai, so localhost:3001 chalta hai — koi proxy nahi
-       chahiye (SchoolMentorSuperAdminAPI ke bar-aks, jiski fixed allow-list hai).
-     prod (npm run build)      → OWN origin (empty base). The site is https and
-       cannot call the API host cross-origin, so IIS reverse-proxies
-       /api/... to the API — see the "API Proxy" rule in public/web.config.
+   Base URL, dev vs prod (faisla RUNTIME par hostname se — niche
+   defaultApiBase() dekho, NODE_ENV par bharosa nahi):
+     dev  (npm start on localhost:3001) → API host directly:
+       https://alphaapi.schoolmentor.ai (swagger /swagger/index.html par).
+       Uski CORS allow-list me localhost:3001 hai, is liye proxy nahi chahiye.
+     prod (kisi bhi deployed host, e.g. https://admin.schoolmentor.ai)
+       → OWN origin (empty base). alphaapi ki allow-list me ye origin NAHI hai
+       (jawab me koi Access-Control-Allow-Origin nahi → CORS error), aur https
+       page http API ko bhi call nahi kar sakta. Is liye IIS same-origin
+       /api/... ko API par reverse-proxy karta hai — public/web.config ka
+       "API Proxy" rule (ARR "Enable proxy" + URL Rewrite chahiye).
+       Verify: curl https://admin.schoolmentor.ai/api/support/sessions → 200.
 
    The base URL / token are resolved lazily on every call because the session
    token only appears after login.
    ════════════════════════════════════════════════════════════════════ */
 
-const env = (typeof process !== 'undefined' && process.env) ? process.env : {};
+/* CRA (webpack 5) sirf poore `process.env` expression ko ek object literal se
+   badalta hai — bare `process` browser bundle me maujood NAHI hota. Is liye
+   `typeof process !== 'undefined'` production build me FALSE nikalta tha aur
+   yeh poora object {} reh jata tha: NODE_ENV aur saare REACT_APP_* gayab.
+   Isi wajah se prod build dev ka base (alphaapi) utha leta tha aur live par
+   har support call CORS par mar jati thi. `process.env` seedha likhna hi
+   theek hai — webpack use compile time par inline kar deta hai. */
+const env = process.env || {};
 
 const stripTrailingSlash = (u) => (typeof u === 'string' ? u.replace(/\/+$/, '') : u);
 
@@ -40,9 +51,29 @@ const stripTrailingSlash = (u) => (typeof u === 'string' ? u.replace(/\/+$/, '')
 const DEV_API_BASE = 'https://alphaapi.schoolmentor.ai';
 const PROD_API_BASE = '';
 
-const DEFAULT_API_BASE = env.REACT_APP_SUPPORT_API
-  ? stripTrailingSlash(env.REACT_APP_SUPPORT_API)
-  : (env.NODE_ENV === 'production' ? PROD_API_BASE : DEV_API_BASE);
+/* Kya hum dev machine par chal rahe hain?
+
+   Base ka faisla NODE_ENV ke bharose par NAHI chhorte. alphaapi ki CORS ek
+   fixed allow-list hai — http://localhost:3001 allowed hai, magar
+   https://admin.schoolmentor.ai NAHI (uske jawab me koi
+   Access-Control-Allow-Origin header hi nahi aata). Is liye jis build me
+   env inline na ho — ya jab app kisi host page me embed ho — wahan prod
+   bundle alphaapi ko cross-origin call karta hai aur HAR support request
+   CORS par mar jati hai. Hostname runtime par hamesha sach bolta hai:
+   localhost = dev (seedha alphaapi), koi bhi deployed host = apna origin +
+   IIS rewrite (web.config ka "API Proxy" rule). */
+const isLocalhostOrigin = () => {
+  try {
+    return /^(localhost|127\.0\.0\.1|\[?::1\]?)$/i.test(window.location.hostname);
+  } catch (e) {
+    return false;                       // koi window nahi (SSR/test) → deployed maan lo
+  }
+};
+
+const defaultApiBase = () => {
+  if (env.REACT_APP_SUPPORT_API) return stripTrailingSlash(env.REACT_APP_SUPPORT_API);
+  return isLocalhostOrigin() ? DEV_API_BASE : PROD_API_BASE;
+};
 
 /* Mutable runtime config. null → fall back to the defaults / session token. */
 const cfg = {
@@ -64,7 +95,7 @@ const cfg = {
 
 /** Host origin the Support API is served from. */
 export function supportApiBase() {
-  return cfg.apiBaseUrl != null ? cfg.apiBaseUrl : DEFAULT_API_BASE;
+  return cfg.apiBaseUrl != null ? cfg.apiBaseUrl : defaultApiBase();
 }
 
 /** Every Support REST route sits under this prefix. */

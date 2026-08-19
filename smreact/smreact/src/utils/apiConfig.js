@@ -94,9 +94,10 @@ export function buildSuperAdminUrl(path = '') {
 
 const CHAIN_API_PREFIX = '/SchoolmentorChainManagementAPI';
 
-const CHAIN_API_ENV = (typeof process !== 'undefined' && process.env)
-  ? process.env.REACT_APP_CHAIN_API_BASE
-  : undefined;
+/* Bare `process` browser bundle me nahi hota — sirf `process.env` ko webpack
+   inline karta hai. `typeof process` par shart lagane se prod build me value
+   gayab ho jati thi. */
+const CHAIN_API_ENV = process.env.REACT_APP_CHAIN_API_BASE;
 
 export const CHAIN_API_HOST = stripSlash(
   CHAIN_API_ENV != null && CHAIN_API_ENV !== ''
@@ -126,8 +127,7 @@ export function buildChainApiUrl(path = '') {
 // API stamped. EVERY file path from the API must go through it.
 // Override the host with REACT_APP_MEDIA_BASE if it ever moves.
 export const MEDIA_BASE = stripSlash(
-  (typeof process !== 'undefined' && process.env && process.env.REACT_APP_MEDIA_BASE)
-  || 'https://alphaapi.schoolmentor.ai',
+  process.env.REACT_APP_MEDIA_BASE || 'https://alphaapi.schoolmentor.ai',
 );
 
 /* Every folder the API serves uploads from. /UploadedImages holds branch logos
