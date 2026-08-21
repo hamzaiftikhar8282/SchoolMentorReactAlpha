@@ -999,19 +999,8 @@ const getClassesData = async () => {
         onSaved={() => setPwRefresh(n => n + 1)}
         toast={toast}
       />
-{/* subject get thorup gradeID, SectionId
-      <TermBreakupModal
-  cls={tbModalClass?.name}
-  gradeId={tbModalClass?.gradeId}
-  sectionId={tbModalClass?.sectionId}
-  onSaved={() => setTbRefreshKey(k => k + 1)}
-  onClose={() => setTbModalClass(null)}
-  toast={toast}
-/> */}
-
 {/* subject get thorup gradeID, SectionId */}
       <TermBreakupModal
-  key={tbModalClass ? `${tbModalClass.gradeId}_${tbModalClass.sectionId}` : 'closed'}
   cls={tbModalClass?.name}
   gradeId={tbModalClass?.gradeId}
   sectionId={tbModalClass?.sectionId}
@@ -1019,6 +1008,8 @@ const getClassesData = async () => {
   onClose={() => setTbModalClass(null)}
   toast={toast}
 />
+
+
 
 
       <UnitMgrModal
