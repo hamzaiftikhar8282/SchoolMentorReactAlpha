@@ -125,12 +125,14 @@ export default function LoginScreen({ onLogin, onSignup }) {
     if (!res.ok) {
       /* 404 = endpoint hi maujood nahi. "Login failed" yahan gumraah karta hai
          (user samajhta hai password ghalat hai), is liye asli wajah batao. */
-      if (res.status === 404) {
-        setError(isNetwork
-          ? 'Network login is not available on this server yet. The network-login API has not been deployed.'
-          : 'Login service not found on the server. Please contact support.');
-        return;
-      }
+     if (res.status === 404) {
+  setError(
+    isNetwork
+      ? 'Network user not found'
+      : 'User not found'
+  );
+  return;
+}
       setError(serverMessage(data, raw) || 'Login failed');
       return;
     }
