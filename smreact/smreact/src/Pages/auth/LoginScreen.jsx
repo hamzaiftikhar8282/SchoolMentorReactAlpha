@@ -128,7 +128,7 @@ export default function LoginScreen({ onLogin, onSignup }) {
      if (res.status === 404) {
   setError(
     isNetwork
-      ? 'Network user not found'
+      ? 'Network User not found'
       : 'User not found'
   );
   return;
